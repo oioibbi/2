@@ -3,6 +3,8 @@
 
   const MODE = { CAMPAIGN: "campaign", ENDLESS: "endless" };
   const STORAGE_KEY = "muyu-breaker.v1";
+  const LOGICAL_WIDTH = 960;
+  const LOGICAL_HEIGHT = 540;
 
   const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
   const lerp = (a, b, t) => a + (b - a) * t;
@@ -359,7 +361,28 @@
   function makeGame(canvas) {
     const ctx = canvas.getContext("2d");
     const audio = makeAudio();
-    const bounds = { w: canvas.width, h: canvas.height };
+    const bounds = { w: LOGICAL_WIDTH, h: LOGICAL_HEIGHT };
+    let renderScaleX = 1;
+    let renderScaleY = 1;
+
+    function resizeCanvas() {
+      const rect = canvas.getBoundingClientRect();
+      const width = Math.max(1, rect.width || LOGICAL_WIDTH);
+      const height = Math.max(1, rect.height || LOGICAL_HEIGHT);
+      const dpr = clamp(window.devicePixelRatio || 1, 1, 3);
+      const targetWidth = Math.round(width * dpr);
+      const targetHeight = Math.round(height * dpr);
+
+      if (canvas.width !== targetWidth || canvas.height !== targetHeight) {
+        canvas.width = targetWidth;
+        canvas.height = targetHeight;
+      }
+
+      renderScaleX = targetWidth / bounds.w;
+      renderScaleY = targetHeight / bounds.h;
+      ctx.setTransform(renderScaleX, 0, 0, renderScaleY, 0, 0);
+      ctx.imageSmoothingEnabled = true;
+    }
 
     const state = {
       mode: MODE.CAMPAIGN,
@@ -952,6 +975,159 @@
       ctx2.closePath();
     }
 
+    function clipRoundRect(ctx2, x, y, w, h, r) {
+      roundRect(ctx2, x, y, w, h, r);
+      ctx2.clip();
+    }
+
+    function drawWoodgrain(ctx2, x, y, r, tint) {
+      ctx2.save();
+      ctx2.beginPath();
+      ctx2.arc(x, y, r - 0.8, 0, Math.PI * 2);
+      ctx2.clip();
+      ctx2.strokeStyle = tint;
+      for (let i = 0; i < 5; i++) {
+        const rx = r * (0.22 + i * 0.13);
+        const ry = r * (0.16 + i * 0.11);
+        ctx2.lineWidth = Math.max(0.7, r * (0.02 + i * 0.004));
+        ctx2.beginPath();
+        ctx2.ellipse(x + r * 0.1 - i * 0.9, y + r * 0.08 + i * 0.55, rx, ry, 0.28, 0.15, Math.PI * 1.7);
+        ctx2.stroke();
+      }
+      ctx2.restore();
+    }
+
+    function drawMetalBrushed(ctx2, x, y, r, tint) {
+      ctx2.save();
+      ctx2.beginPath();
+      ctx2.arc(x, y, r - 0.8, 0, Math.PI * 2);
+      ctx2.clip();
+      ctx2.strokeStyle = tint;
+      ctx2.lineWidth = Math.max(0.8, r * 0.05);
+      for (let i = -r; i < r; i += Math.max(3, r * 0.18)) {
+        ctx2.beginPath();
+        ctx2.moveTo(x - r * 0.9, y + i * 0.55);
+        ctx2.lineTo(x + r * 0.9, y + i * 0.15);
+        ctx2.stroke();
+      }
+      ctx2.restore();
+    }
+
+    function drawCrystalFacets(ctx2, x, y, r, tint) {
+      ctx2.save();
+      ctx2.beginPath();
+      ctx2.arc(x, y, r - 0.8, 0, Math.PI * 2);
+      ctx2.clip();
+      ctx2.strokeStyle = tint;
+      ctx2.lineWidth = Math.max(0.9, r * 0.04);
+      for (let i = 0; i < 4; i++) {
+        const angle = -Math.PI / 4 + (i * Math.PI) / 4;
+        ctx2.beginPath();
+        ctx2.moveTo(x, y);
+        ctx2.lineTo(x + Math.cos(angle) * r * 0.82, y + Math.sin(angle) * r * 0.82);
+        ctx2.stroke();
+      }
+      ctx2.restore();
+    }
+
+    function drawBrickSurfaceNoise(ctx2, x, y, w, h, seed, tint) {
+      ctx2.save();
+      clipRoundRect(ctx2, x + 1, y + 1, w - 2, h - 2, 7);
+      ctx2.fillStyle = tint;
+      const dotCount = Math.max(8, Math.floor((w * h) / 180));
+      for (let i = 0; i < dotCount; i++) {
+        const sx = x + 3 + (((seed * 997 + i * 37) % 1000) / 1000) * (w - 6);
+        const sy = y + 3 + (((seed * 619 + i * 53) % 1000) / 1000) * (h - 6);
+        const rr = 0.6 + ((((seed * 409 + i * 23) % 1000) / 1000) * 1.4);
+        ctx2.beginPath();
+        ctx2.arc(sx, sy, rr, 0, Math.PI * 2);
+        ctx2.fill();
+      }
+      ctx2.restore();
+    }
+
+    function drawPaddleInlay(ctx2, x, y, w, h, tint) {
+      ctx2.save();
+      clipRoundRect(ctx2, x, y, w, h, 10);
+      ctx2.strokeStyle = tint;
+      ctx2.lineWidth = 1;
+      for (let i = 1; i <= 3; i++) {
+        const yy = y + (h / 4) * i - h / 8;
+        ctx2.beginPath();
+        ctx2.moveTo(x + 10, yy);
+        ctx2.lineTo(x + w - 10, yy);
+        ctx2.stroke();
+      }
+      ctx2.restore();
+    }
+
+    function drawSkyWisps(ctx2, t) {
+      ctx2.save();
+      ctx2.globalAlpha = 0.14;
+      for (let i = 0; i < 4; i++) {
+        const baseX = ((t * (12 + i * 4)) + i * 220) % (bounds.w + 280) - 140;
+        const y = 74 + i * 58;
+        const g = ctx2.createRadialGradient(baseX, y, 8, baseX, y, 120);
+        g.addColorStop(0, i % 2 ? "rgba(216,184,107,0.28)" : "rgba(111,167,155,0.22)");
+        g.addColorStop(1, "rgba(0,0,0,0)");
+        ctx2.fillStyle = g;
+        ctx2.beginPath();
+        ctx2.ellipse(baseX, y, 140, 26 + i * 4, 0, 0, Math.PI * 2);
+        ctx2.fill();
+      }
+      ctx2.restore();
+    }
+
+    function drawMountainLayer(ctx2, baseY, amp, color, seedShift) {
+      ctx2.save();
+      ctx2.fillStyle = color;
+      ctx2.beginPath();
+      ctx2.moveTo(0, bounds.h);
+      ctx2.lineTo(0, baseY);
+      for (let x = 0; x <= bounds.w + 20; x += 20) {
+        const y =
+          baseY -
+          Math.sin((x + seedShift) * 0.014) * amp -
+          Math.sin((x + seedShift * 0.7) * 0.028) * amp * 0.35 -
+          Math.cos((x + seedShift * 0.31) * 0.006) * amp * 0.42;
+        ctx2.lineTo(x, y);
+      }
+      ctx2.lineTo(bounds.w, bounds.h);
+      ctx2.closePath();
+      ctx2.fill();
+      ctx2.restore();
+    }
+
+    function drawRuneCircle(ctx2, cx, cy, r, t) {
+      ctx2.save();
+      ctx2.translate(cx, cy);
+      ctx2.rotate(t * 0.04);
+      ctx2.globalAlpha = 0.22;
+      ctx2.strokeStyle = "rgba(216,184,107,0.34)";
+      ctx2.lineWidth = 1.2;
+      ctx2.beginPath();
+      ctx2.arc(0, 0, r, 0, Math.PI * 2);
+      ctx2.stroke();
+      ctx2.beginPath();
+      ctx2.arc(0, 0, r * 0.72, 0, Math.PI * 2);
+      ctx2.stroke();
+      for (let i = 0; i < 12; i++) {
+        const a = (i / 12) * Math.PI * 2;
+        const glyph = ["乾", "坤", "离", "坎", "震", "巽", "艮", "兑"][i % 8];
+        ctx2.save();
+        ctx2.rotate(a);
+        ctx2.translate(0, -r * 0.86);
+        ctx2.rotate(-a);
+        ctx2.fillStyle = "rgba(245,236,210,0.18)";
+        ctx2.font = "700 12px 'STZhongsong', 'Songti SC', serif";
+        ctx2.textAlign = "center";
+        ctx2.textBaseline = "middle";
+        ctx2.fillText(glyph, 0, 0);
+        ctx2.restore();
+      }
+      ctx2.restore();
+    }
+
     function drawWoodfish(ctx2, x, y, r) {
       ctx2.save();
       const woodfish = currentWoodfishTier();
@@ -985,10 +1161,13 @@
       ctx2.fillStyle = grad;
       ctx2.strokeStyle = "rgba(0,0,0,0.22)";
       ctx2.lineWidth = 1.5;
+      ctx2.shadowColor = key === "rainbow" ? "rgba(255, 190, 120, 0.28)" : "rgba(0, 0, 0, 0.22)";
+      ctx2.shadowBlur = r * 0.8;
       ctx2.beginPath();
       ctx2.arc(x, y, r, 0, Math.PI * 2);
       ctx2.fill();
       ctx2.stroke();
+      ctx2.shadowBlur = 0;
 
       ctx2.strokeStyle = "rgba(0,0,0,0.18)";
       ctx2.lineWidth = 1;
@@ -1003,8 +1182,22 @@
       ctx2.beginPath();
       ctx2.arc(x - r * 0.35, y - r * 0.35, r * 0.22, 0, Math.PI * 2);
       ctx2.fill();
+      ctx2.fillStyle = "rgba(255,255,255,0.06)";
+      ctx2.beginPath();
+      ctx2.arc(x + r * 0.18, y + r * 0.2, r * 0.62, 0.1, Math.PI * 1.25);
+      ctx2.strokeStyle = "rgba(255,255,255,0.08)";
+      ctx2.lineWidth = Math.max(1, r * 0.08);
+      ctx2.stroke();
+
+      if (key === "bronze" || key === "gold" || key === "rainbow") {
+        drawWoodgrain(ctx2, x, y, r * 0.94, key === "gold" ? "rgba(120,72,12,0.18)" : "rgba(85,40,10,0.2)");
+      }
+      if (key === "blackiron" || key === "gold") {
+        drawMetalBrushed(ctx2, x, y, r * 0.96, key === "gold" ? "rgba(255,248,170,0.11)" : "rgba(255,255,255,0.08)");
+      }
 
       if (key === "diamond") {
+        drawCrystalFacets(ctx2, x, y, r * 0.96, "rgba(255,255,255,0.16)");
         ctx2.save();
         ctx2.strokeStyle = "rgba(255,255,255,0.22)";
         ctx2.lineWidth = 1;
@@ -1023,6 +1216,8 @@
         ctx2.arc(x + r * 0.2, y + r * 0.25, r * 0.28, 0, Math.PI * 2);
         ctx2.fill();
         ctx2.restore();
+      } else if (key === "rainbow") {
+        drawCrystalFacets(ctx2, x, y, r * 0.92, "rgba(255,255,255,0.14)");
       }
 
       ctx2.restore();
@@ -1052,10 +1247,45 @@
 
     function draw() {
       ctx.clearRect(0, 0, bounds.w, bounds.h);
+      const sceneTime = nowMs() / 1000;
 
       ctx.save();
-      ctx.fillStyle = "rgba(0,0,0,0.18)";
+      const bg = ctx.createLinearGradient(0, 0, 0, bounds.h);
+      bg.addColorStop(0, "rgba(9, 13, 20, 0.96)");
+      bg.addColorStop(0.42, "rgba(18, 26, 36, 0.86)");
+      bg.addColorStop(0.72, "rgba(30, 20, 16, 0.8)");
+      bg.addColorStop(1, "rgba(23, 14, 10, 0.92)");
+      ctx.fillStyle = bg;
       ctx.fillRect(0, 0, bounds.w, bounds.h);
+      const glowA = ctx.createRadialGradient(bounds.w * 0.18, bounds.h * 0.12, 10, bounds.w * 0.18, bounds.h * 0.12, 260);
+      glowA.addColorStop(0, "rgba(216,184,107,0.16)");
+      glowA.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = glowA;
+      ctx.fillRect(0, 0, bounds.w, bounds.h);
+      const glowB = ctx.createRadialGradient(bounds.w * 0.82, bounds.h * 0.18, 10, bounds.w * 0.82, bounds.h * 0.18, 220);
+      glowB.addColorStop(0, "rgba(111,167,155,0.12)");
+      glowB.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = glowB;
+      ctx.fillRect(0, 0, bounds.w, bounds.h);
+      ctx.restore();
+
+      drawSkyWisps(ctx, sceneTime);
+      drawRuneCircle(ctx, bounds.w * 0.16, bounds.h * 0.22, 48, sceneTime);
+      drawRuneCircle(ctx, bounds.w * 0.84, bounds.h * 0.18, 36, -sceneTime * 0.8);
+      drawMountainLayer(ctx, bounds.h * 0.74, 34, "rgba(24, 32, 40, 0.82)", 0);
+      drawMountainLayer(ctx, bounds.h * 0.8, 48, "rgba(17, 24, 31, 0.92)", 180);
+      drawMountainLayer(ctx, bounds.h * 0.86, 26, "rgba(35, 23, 18, 0.95)", 420);
+
+      ctx.save();
+      ctx.globalAlpha = 0.08;
+      for (let i = 0; i < 28; i++) {
+        const px = (i * 137 + 40) % bounds.w;
+        const py = (i * 83 + 20) % bounds.h;
+        ctx.beginPath();
+        ctx.arc(px, py, 1.2 + (i % 3), 0, Math.PI * 2);
+        ctx.fillStyle = i % 2 ? "rgba(246,211,122,1)" : "rgba(120,170,255,1)";
+        ctx.fill();
+      }
       ctx.restore();
 
       // Bricks
@@ -1084,6 +1314,34 @@
         roundRect(ctx, b.x, b.y, b.w, b.h, 8);
         ctx.fill();
         ctx.stroke();
+        ctx.save();
+        const shine = ctx.createLinearGradient(b.x, b.y, b.x, b.y + b.h);
+        shine.addColorStop(0, "rgba(255,255,255,0.14)");
+        shine.addColorStop(0.45, "rgba(255,255,255,0.03)");
+        shine.addColorStop(1, "rgba(0,0,0,0.08)");
+        ctx.fillStyle = shine;
+        roundRect(ctx, b.x + 1, b.y + 1, b.w - 2, b.h - 2, 7);
+        ctx.fill();
+        ctx.restore();
+        drawBrickSurfaceNoise(
+          ctx,
+          b.x,
+          b.y,
+          b.w,
+          b.h,
+          Math.floor((b.styleSeed ?? 0.37) * 1000),
+          isMoving ? "rgba(255,255,255,0.055)" : "rgba(0,0,0,0.06)"
+        );
+
+        ctx.save();
+        clipRoundRect(ctx, b.x + 1, b.y + 1, b.w - 2, b.h - 2, 7);
+        ctx.strokeStyle = isMoving ? "rgba(255,255,255,0.09)" : "rgba(255,255,255,0.05)";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(b.x + 6, b.y + 5);
+        ctx.lineTo(b.x + b.w - 6, b.y + 5);
+        ctx.stroke();
+        ctx.restore();
 
         // Patterns
         if (b.variant === "stripes" || isMoving) {
@@ -1120,6 +1378,9 @@
           ctx.textAlign = "left";
           ctx.textBaseline = "alphabetic";
           ctx.fillText(b.glyph ?? "业", b.x + 8, b.y + b.h - 6);
+          ctx.strokeStyle = "rgba(255,255,255,0.08)";
+          ctx.lineWidth = 1;
+          ctx.strokeText(b.glyph ?? "业", b.x + 8, b.y + b.h - 6);
           ctx.restore();
         } else if (b.hpMax >= 3) {
           ctx.save();
@@ -1150,11 +1411,29 @@
         ctx.translate(p.x, p.y);
         const baseFill = p.id === 0 ? "rgba(246,211,122,0.22)" : "rgba(246,211,122,0.14)";
         const baseStroke = p.id === 0 ? "rgba(246,211,122,0.35)" : "rgba(246,211,122,0.22)";
+        const paddleGrad = ctx.createLinearGradient(-p.w / 2, 0, p.w / 2, 0);
+        paddleGrad.addColorStop(0, p.id === 0 ? "rgba(255,240,170,0.18)" : "rgba(255,240,170,0.08)");
+        paddleGrad.addColorStop(0.5, baseFill);
+        paddleGrad.addColorStop(1, "rgba(120,170,255,0.14)");
         ctx.fillStyle = baseFill;
         ctx.strokeStyle = baseStroke;
+        ctx.shadowColor = "rgba(0,0,0,0.22)";
+        ctx.shadowBlur = 10;
         roundRect(ctx, -p.w / 2, -p.h / 2, p.w, p.h, 10);
+        ctx.fillStyle = paddleGrad;
         ctx.fill();
         ctx.stroke();
+        ctx.shadowBlur = 0;
+        drawPaddleInlay(ctx, -p.w / 2, -p.h / 2, p.w, p.h, p.id === 0 ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.05)");
+        ctx.save();
+        clipRoundRect(ctx, -p.w / 2 + 1, -p.h / 2 + 1, p.w - 2, p.h - 2, 9);
+        const topShine = ctx.createLinearGradient(0, -p.h / 2, 0, p.h / 2);
+        topShine.addColorStop(0, "rgba(255,255,255,0.16)");
+        topShine.addColorStop(0.45, "rgba(255,255,255,0.03)");
+        topShine.addColorStop(1, "rgba(0,0,0,0.08)");
+        ctx.fillStyle = topShine;
+        ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+        ctx.restore();
         if (isRage) {
           const g = ctx.createLinearGradient(0, -p.h, 0, p.h);
           g.addColorStop(0, "rgba(255,80,40,0.0)");
@@ -1166,6 +1445,16 @@
         }
         ctx.restore();
       }
+
+      ctx.save();
+      ctx.globalAlpha = 0.12;
+      ctx.strokeStyle = "rgba(216,184,107,0.18)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(20, bounds.h - 78);
+      ctx.bezierCurveTo(bounds.w * 0.28, bounds.h - 110, bounds.w * 0.72, bounds.h - 108, bounds.w - 20, bounds.h - 74);
+      ctx.stroke();
+      ctx.restore();
 
       // Aim line
       const aimBall = primaryBall();
@@ -1274,6 +1563,7 @@
     }
 
     function tick() {
+      resizeCanvas();
       const t = nowMs();
       const dt = t - state.lastTickMs;
       state.lastTickMs = t;
@@ -1282,6 +1572,9 @@
       requestAnimationFrame(tick);
     }
 
+    resizeCanvas();
+    window.addEventListener("resize", resizeCanvas);
+    window.addEventListener("orientationchange", resizeCanvas);
     bindInput();
     startMode(MODE.CAMPAIGN);
     requestAnimationFrame(tick);
