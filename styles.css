@@ -184,6 +184,24 @@ canvas#game {
 }
 .hint { font-size: 12px; color: rgba(245, 236, 210, 0.76); text-shadow: 0 1px 10px rgba(0,0,0,0.3); }
 
+.mobile-tip {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(216, 184, 107, 0.22);
+  background:
+    linear-gradient(180deg, rgba(216, 184, 107, 0.14), rgba(0, 0, 0, 0.14)),
+    rgba(12, 14, 20, 0.68);
+  color: rgba(245, 236, 210, 0.94);
+  font-size: 12px;
+  line-height: 1.45;
+  pointer-events: none;
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.24);
+}
+
 .overlay, .records {
   position: absolute;
   inset: 0;
@@ -355,18 +373,41 @@ canvas#game {
 @keyframes rainbowSpin { to { transform: rotate(360deg); } }
 
 .skin-paddle {
-  width: 66px;
-  height: 14px;
-  border-radius: 10px;
+  width: 78px;
+  height: 18px;
+  border-radius: 0;
   border: 1px solid rgba(233,238,248,0.22);
   box-shadow: 0 10px 26px rgba(0,0,0,0.35);
+  position: relative;
+  clip-path: polygon(0 50%, 14% 20%, 72% 20%, 100% 50%, 72% 80%, 14% 80%);
+  overflow: hidden;
 }
+.skin-paddle::before,
+.skin-paddle::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+.skin-paddle::before {
+  background:
+    linear-gradient(90deg, transparent 0 8%, rgba(255,255,255,0.92) 8% 11%, rgba(255,255,255,0.15) 11% 72%, transparent 72%),
+    radial-gradient(circle at 48% 50%, rgba(255,255,255,0.95) 0 8%, transparent 9%),
+    linear-gradient(90deg, transparent 0 40%, rgba(255,240,170,0.9) 40% 56%, transparent 56%);
+  opacity: 0.95;
+}
+
+.skin-paddle::after {
+  background: linear-gradient(90deg, rgba(255,255,255,0.25), transparent 18%, transparent 82%, rgba(120,170,255,0.22));
+  mix-blend-mode: screen;
+}
+
 .pd-mortal { background: linear-gradient(90deg, rgba(246,211,122,0.18), rgba(246,211,122,0.12)); }
-.pd-spirit { background: linear-gradient(90deg, rgba(120,170,255,0.26), rgba(246,211,122,0.12)); }
-.pd-dharma { background: linear-gradient(90deg, rgba(120,255,210,0.22), rgba(120,170,255,0.22)); }
-.pd-treasure { background: linear-gradient(90deg, rgba(255,170,80,0.22), rgba(246,211,122,0.2)); }
+.pd-spirit { background: linear-gradient(90deg, rgba(120,170,255,0.36), rgba(246,211,122,0.16)); }
+.pd-dharma { background: linear-gradient(90deg, rgba(120,255,210,0.3), rgba(120,170,255,0.24)); }
+.pd-treasure { background: linear-gradient(90deg, rgba(255,170,80,0.3), rgba(246,211,122,0.24)); }
 .pd-sacred {
-  background: linear-gradient(90deg, rgba(255,95,109,0.18), rgba(120,170,255,0.22), rgba(246,211,122,0.18));
+  background: linear-gradient(90deg, rgba(255,95,109,0.26), rgba(120,170,255,0.28), rgba(246,211,122,0.22));
 }
 
 @media (max-width: 960px) {
@@ -478,6 +519,14 @@ canvas#game {
     padding: 5px 7px;
   }
 
+  .mobile-tip {
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+    font-size: 11px;
+    padding: 8px 10px;
+  }
+
   .overlay, .records {
     padding: 10px;
   }
@@ -498,6 +547,61 @@ canvas#game {
     font-size: 12px;
     padding: 7px 9px;
   }
+}
+
+body.mobile-portrait .topbar {
+  padding: 6px 8px;
+  gap: 6px;
+}
+
+body.mobile-portrait .brand .title {
+  font-size: 18px;
+}
+
+body.mobile-portrait .brand .subtitle {
+  display: none;
+}
+
+body.mobile-portrait .top-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+body.mobile-portrait .top-actions .btn {
+  padding: 8px 6px;
+  font-size: 12px;
+}
+
+body.mobile-portrait .stage {
+  padding: 4px;
+}
+
+body.mobile-portrait .game-shell {
+  width: min(100%, calc(100dvh * 16 / 9));
+  max-height: min(calc(100dvh - 92px), calc(100vw * 9 / 16));
+}
+
+body.mobile-portrait .hud {
+  top: 6px;
+  left: 6px;
+  right: 6px;
+  gap: 3px;
+}
+
+body.mobile-portrait .hud-row {
+  gap: 3px;
+}
+
+body.mobile-portrait .hud-row-primary .pill,
+body.mobile-portrait .hud-row-secondary .pill {
+  font-size: 10px;
+  padding: 5px 6px;
+}
+
+body.mobile-portrait .hud-extra,
+body.mobile-portrait .hud-row.small {
+  display: none;
 }
 
 body.mobile-landscape .app {
