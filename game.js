@@ -94,6 +94,9 @@
         woodfishTier: 0, // 0-4: 青铜/黑铁/黄金/钻石/七彩
         paddleTier: 0, // 0-4
       },
+      preferences: {
+        mobileLandscape: false,
+      },
       leaderboard: { campaign: [], endless: [] },
       history: [],
     };
@@ -112,6 +115,8 @@
     save.inventory ??= {};
     save.inventory.woodfishTier = Number.isFinite(save.inventory.woodfishTier) ? clamp(save.inventory.woodfishTier, 0, 4) : 0;
     save.inventory.paddleTier = Number.isFinite(save.inventory.paddleTier) ? clamp(save.inventory.paddleTier, 0, 4) : 0;
+    save.preferences ??= {};
+    save.preferences.mobileLandscape = Boolean(save.preferences.mobileLandscape);
     save.leaderboard ??= { campaign: [], endless: [] };
     save.leaderboard.campaign ??= [];
     save.leaderboard.endless ??= [];
@@ -140,9 +145,80 @@
   function makeAudio() {
     let ctx = null;
     let enabled = false;
+    let bgmReady = false;
+    let bgmEnabled = true;
+    let bgmMaster = null;
+    let bgmDroneGain = null;
+    let bgmDrones = [];
+    let bgmLfo = null;
+    let bgmPulseTimer = 0;
+
+    function createBgmGraph() {
+      if (!ctx || bgmReady) return;
+      bgmMaster = ctx.createGain();
+      bgmMaster.gain.setValueAtTime(0.0001, ctx.currentTime);
+
+      bgmDroneGain = ctx.createGain();
+      bgmDroneGain.gain.setValueAtTime(0.18, ctx.currentTime);
+      bgmDroneGain.connect(bgmMaster);
+
+      const filter = ctx.createBiquadFilter();
+      filter.type = "lowpass";
+      filter.frequency.setValueAtTime(920, ctx.currentTime);
+      filter.Q.setValueAtTime(0.8, ctx.currentTime);
+      bgmMaster.connect(filter).connect(ctx.destination);
+
+      const freqs = [146.83, 220.0, 293.66];
+      bgmDrones = freqs.map((freq, index) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = index === 1 ? "triangle" : "sine";
+        osc.frequency.setValueAtTime(freq, ctx.currentTime);
+        gain.gain.setValueAtTime(index === 1 ? 0.05 : 0.035, ctx.currentTime);
+        osc.connect(gain).connect(bgmDroneGain);
+        osc.start();
+        return { osc, gain };
+      });
+
+      bgmLfo = ctx.createOscillator();
+      const lfoGain = ctx.createGain();
+      bgmLfo.type = "sine";
+      bgmLfo.frequency.setValueAtTime(0.055, ctx.currentTime);
+      lfoGain.gain.setValueAtTime(0.035, ctx.currentTime);
+      bgmLfo.connect(lfoGain).connect(bgmDroneGain.gain);
+      bgmLfo.start();
+
+      bgmReady = true;
+    }
+
+    function schedulePulse() {
+      if (!enabled || !bgmEnabled || !ctx) return;
+      const current = ctx.currentTime;
+      if (current < bgmPulseTimer - 0.05) return;
+      bgmPulseTimer = current + 3.8 + Math.random() * 2.1;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      const filter = ctx.createBiquadFilter();
+      filter.type = "bandpass";
+      filter.frequency.setValueAtTime(720 + Math.random() * 240, current);
+      filter.Q.setValueAtTime(3.5, current);
+      osc.type = Math.random() > 0.5 ? "sine" : "triangle";
+      osc.frequency.setValueAtTime(392 + Math.random() * 110, current);
+      osc.frequency.exponentialRampToValueAtTime(196 + Math.random() * 80, current + 1.8);
+      gain.gain.setValueAtTime(0.0001, current);
+      gain.gain.exponentialRampToValueAtTime(0.04, current + 0.03);
+      gain.gain.exponentialRampToValueAtTime(0.0001, current + 1.9);
+      osc.connect(filter).connect(gain).connect(bgmMaster);
+      osc.start(current);
+      osc.stop(current + 2.1);
+    }
+
     return {
       get enabled() {
         return enabled;
+      },
+      get bgmEnabled() {
+        return bgmEnabled;
       },
       get ctx() {
         if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -153,9 +229,35 @@
           enabled = true;
           if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
           if (ctx.state === "suspended") await ctx.resume();
+          createBgmGraph();
         } catch {
           enabled = false;
         }
+      },
+      startBgm() {
+        if (!enabled) return;
+        createBgmGraph();
+        if (!bgmMaster) return;
+        const t = ctx.currentTime;
+        bgmMaster.gain.cancelScheduledValues(t);
+        bgmMaster.gain.setValueAtTime(Math.max(0.0001, bgmMaster.gain.value), t);
+        bgmMaster.gain.exponentialRampToValueAtTime(bgmEnabled ? 0.22 : 0.0001, t + 1.8);
+        schedulePulse();
+      },
+      updateBgm() {
+        if (!enabled || !bgmEnabled) return;
+        schedulePulse();
+      },
+      toggleBgm() {
+        bgmEnabled = !bgmEnabled;
+        if (!enabled) return bgmEnabled;
+        createBgmGraph();
+        const t = ctx.currentTime;
+        bgmMaster.gain.cancelScheduledValues(t);
+        bgmMaster.gain.setValueAtTime(Math.max(0.0001, bgmMaster.gain.value), t);
+        bgmMaster.gain.exponentialRampToValueAtTime(bgmEnabled ? 0.22 : 0.0001, t + 0.8);
+        if (bgmEnabled) schedulePulse();
+        return bgmEnabled;
       },
     };
   }
@@ -402,6 +504,7 @@
 
       stageBaseSpeed: 7.2,
       controlX: bounds.w / 2,
+      targetControlX: bounds.w / 2,
       paddles: [{ id: 0, xOffset: 0, x: bounds.w / 2, y: bounds.h - 44, w: 140, h: 16 }],
       balls: [{ id: 0, x: bounds.w / 2, y: bounds.h - 62, r: 12, vx: 0, vy: 0, launched: false, baseSpeed: 7.2 }],
       aim: { active: true, tx: bounds.w / 2, ty: bounds.h / 2 },
@@ -410,6 +513,7 @@
       effects: { slowUntilMs: 0, wideUntilMs: 0 },
 
       rage: { active: false, untilMs: 0, combo: 0, nextAutoAtMs: 0 },
+      particles: [],
       floaters: [],
       lastTickMs: nowMs(),
     };
@@ -417,6 +521,31 @@
     const ui = wireUI({ startMode, getSave: () => save, resetSave, buyWoodfish, buyPaddle });
     let save = migrateSave(loadSave() ?? defaultSave());
     saveToStorage(save);
+    ui.syncAudio(true);
+    ui.audioButton?.addEventListener("click", async () => {
+      if (!audio.enabled) await audio.enable();
+      const enabled = audio.toggleBgm();
+      if (enabled) audio.startBgm();
+      ui.syncAudio(enabled);
+    });
+
+    function syncMobileLandscape(forceLock = false) {
+      const enabled = Boolean(save.preferences?.mobileLandscape);
+      document.body.classList.toggle("mobile-landscape", enabled);
+      ui.syncLandscape(enabled);
+      if (enabled && forceLock && window.innerWidth < 900) {
+        const orientationApi = screen.orientation;
+        orientationApi?.lock?.("landscape").catch(() => {});
+      }
+      resizeCanvas();
+    }
+
+    ui.landscapeButton?.addEventListener("click", () => {
+      save.preferences.mobileLandscape = !save.preferences.mobileLandscape;
+      saveToStorage(save);
+      syncMobileLandscape(true);
+    });
+    syncMobileLandscape();
 
     function resetSave() {
       localStorage.removeItem(STORAGE_KEY);
@@ -438,6 +567,42 @@
 
     function primaryBall() {
       return state.balls[0];
+    }
+
+    function emitParticles(x, y, options = {}) {
+      const {
+        count = 8,
+        color = "rgba(246,211,122,0.9)",
+        colorAlt = null,
+        speedMin = 0.8,
+        speedMax = 2.6,
+        sizeMin = 1.5,
+        sizeMax = 4.4,
+        lifeMin = 280,
+        lifeMax = 820,
+        spread = Math.PI * 2,
+        angle = 0,
+        gravity = 0.006,
+        drag = 0.992,
+        glow = 0.5,
+      } = options;
+      for (let i = 0; i < count; i++) {
+        const localAngle = angle + (Math.random() - 0.5) * spread;
+        const speed = speedMin + Math.random() * (speedMax - speedMin);
+        state.particles.push({
+          x,
+          y,
+          vx: Math.cos(localAngle) * speed,
+          vy: Math.sin(localAngle) * speed,
+          size: sizeMin + Math.random() * (sizeMax - sizeMin),
+          ttl: lifeMin + Math.random() * (lifeMax - lifeMin),
+          maxTtl: lifeMax,
+          gravity,
+          drag,
+          color: colorAlt && Math.random() > 0.55 ? colorAlt : color,
+          glow,
+        });
+      }
     }
 
     function applyEquipmentToLiveObjects() {
@@ -508,6 +673,8 @@
       const tier = currentPaddleTier();
       const x = bounds.w / 2;
       const y = bounds.h - 44;
+      state.controlX = x;
+      state.targetControlX = x;
       state.paddles = [{ id: 0, xOffset: 0, x, y, w: tier.baseW, h: 16 }];
     }
 
@@ -573,11 +740,14 @@
       state.effects.slowUntilMs = 0;
       state.effects.wideUntilMs = 0;
       state.powerups = [];
+      state.particles = [];
       state.floaters = [];
       state.rage.active = false;
       state.rage.untilMs = 0;
       state.rage.combo = 0;
       state.rage.nextAutoAtMs = nowMs() + 52000;
+      state.controlX = bounds.w / 2;
+      state.targetControlX = bounds.w / 2;
 
       resetPaddle();
       resetBallOnPaddle();
@@ -626,6 +796,18 @@
       state.lives -= 1;
       state.pendingMerit = 0;
       state.floaters.push({ x: bounds.w / 2, y: bounds.h / 2, text: "未圆满，功德未入账", ttl: 1200, color: "rgba(255,95,109,0.95)" });
+      emitParticles(bounds.w / 2, bounds.h * 0.78, {
+        count: 18,
+        color: "rgba(255,95,109,0.8)",
+        colorAlt: "rgba(245,236,210,0.5)",
+        speedMin: 1.1,
+        speedMax: 3.4,
+        lifeMin: 420,
+        lifeMax: 920,
+        angle: -Math.PI / 2,
+        spread: Math.PI * 0.85,
+        gravity: 0.01,
+      });
       state.bricks = deepCloneBricks(state.bricksSnapshot);
       state.rage.active = false;
       state.rage.untilMs = 0;
@@ -647,6 +829,17 @@
       save.profile.lifetimeMeritEarned = Math.floor((save.profile.lifetimeMeritEarned ?? 0) + gained);
       saveToStorage(save);
       state.floaters.push({ x: bounds.w / 2, y: bounds.h / 2, text: `功德入账 +${gained}`, ttl: 1200, color: "rgba(246,211,122,0.98)" });
+      emitParticles(bounds.w / 2, bounds.h / 2, {
+        count: 28,
+        color: "rgba(246,211,122,0.9)",
+        colorAlt: "rgba(111,167,155,0.7)",
+        speedMin: 0.8,
+        speedMax: 2.8,
+        lifeMin: 520,
+        lifeMax: 1200,
+        gravity: -0.001,
+        drag: 0.988,
+      });
       woodfishTok(audio, 1.0);
       updateHUD();
 
@@ -722,6 +915,18 @@
         state.floaters.push({ x: p.x, y: p.y - 24, text: "随喜 +60", ttl: 900, color: "rgba(246,211,122,0.98)" });
         updateHUD();
       }
+      emitParticles(p.x, p.y - 8, {
+        count: 14,
+        color: "rgba(246,211,122,0.8)",
+        colorAlt: "rgba(111,167,155,0.8)",
+        speedMin: 0.6,
+        speedMax: 2.2,
+        angle: -Math.PI / 2,
+        spread: Math.PI * 0.9,
+        lifeMin: 360,
+        lifeMax: 860,
+        gravity: 0.003,
+      });
       woodfishTok(audio, 0.8);
     }
 
@@ -770,6 +975,7 @@
     function update(dtMs) {
       if (!state.isRunning || state.isPaused) return;
       const t = nowMs();
+      const frameMs = Math.min(dtMs, 26);
 
       // Rage lifecycle
       if (state.rage.active && t >= state.rage.untilMs) {
@@ -820,14 +1026,26 @@
             });
           }
 
-          state.floaters.push({ x: bounds.w / 2, y: bounds.h / 2, text: "狂暴：众木鱼齐鸣", ttl: 900, color: "rgba(255,120,60,0.95)" });
-          woodfishTok(audio, 1.0);
+            state.floaters.push({ x: bounds.w / 2, y: bounds.h / 2, text: "狂暴：众木鱼齐鸣", ttl: 900, color: "rgba(255,120,60,0.95)" });
+            emitParticles(bounds.w / 2, bounds.h / 2, {
+              count: 34,
+              color: "rgba(255,120,60,0.9)",
+              colorAlt: "rgba(255,220,120,0.8)",
+              speedMin: 1.2,
+              speedMax: 4.2,
+              lifeMin: 460,
+              lifeMax: 1300,
+              gravity: 0.004,
+            });
+            woodfishTok(audio, 1.0);
+          }
         }
-      }
 
       const slowMul = t < state.effects.slowUntilMs ? 0.68 : 1.0;
       const rageMul = state.rage.active ? 1.35 : 1.0;
-      const dt = (dtMs / 16.6667) * slowMul * rageMul;
+      const dt = (frameMs / 16.6667) * slowMul * rageMul;
+      const controlLerp = 1 - Math.pow(0.000001, frameMs / 220);
+      state.controlX = lerp(state.controlX, state.targetControlX, controlLerp);
 
       // Paddle sizing + positions
       const paddleTier = currentPaddleTier();
@@ -848,26 +1066,44 @@
       }
 
       // Move balls + wall collisions
-      for (const ball of state.balls) {
-        if (!ball.launched) continue;
-        ball.x += ball.vx * dt;
-        ball.y += ball.vy * dt;
+        for (const ball of state.balls) {
+          if (!ball.launched) continue;
+          ball.x += ball.vx * dt;
+          ball.y += ball.vy * dt;
+          if (Math.random() < (state.rage.active ? 0.9 : 0.35)) {
+            state.particles.push({
+              x: ball.x - ball.vx * 1.8,
+              y: ball.y - ball.vy * 1.8,
+              vx: -ball.vx * 0.05,
+              vy: -ball.vy * 0.05,
+              size: state.rage.active ? 3.2 : 2.1,
+              ttl: state.rage.active ? 340 : 220,
+              maxTtl: state.rage.active ? 340 : 220,
+              gravity: 0,
+              drag: 0.96,
+              color: state.rage.active ? "rgba(255,120,60,0.55)" : "rgba(216,184,107,0.35)",
+              glow: state.rage.active ? 0.95 : 0.4,
+            });
+          }
 
-        if (ball.x - ball.r < 0) {
-          ball.x = ball.r;
-          ball.vx *= -1;
-          woodfishTok(audio, 0.35);
-        } else if (ball.x + ball.r > bounds.w) {
-          ball.x = bounds.w - ball.r;
-          ball.vx *= -1;
-          woodfishTok(audio, 0.35);
+          if (ball.x - ball.r < 0) {
+            ball.x = ball.r;
+            ball.vx *= -1;
+            emitParticles(ball.x, ball.y, { count: 8, color: "rgba(216,184,107,0.7)", lifeMin: 220, lifeMax: 500, speedMin: 0.8, speedMax: 2.0 });
+            woodfishTok(audio, 0.35);
+          } else if (ball.x + ball.r > bounds.w) {
+            ball.x = bounds.w - ball.r;
+            ball.vx *= -1;
+            emitParticles(ball.x, ball.y, { count: 8, color: "rgba(216,184,107,0.7)", lifeMin: 220, lifeMax: 500, speedMin: 0.8, speedMax: 2.0 });
+            woodfishTok(audio, 0.35);
+          }
+          if (ball.y - ball.r < 0) {
+            ball.y = ball.r;
+            ball.vy *= -1;
+            emitParticles(ball.x, ball.y, { count: 8, color: "rgba(111,167,155,0.7)", lifeMin: 220, lifeMax: 500, speedMin: 0.8, speedMax: 2.0 });
+            woodfishTok(audio, 0.35);
+          }
         }
-        if (ball.y - ball.r < 0) {
-          ball.y = ball.r;
-          ball.vy *= -1;
-          woodfishTok(audio, 0.35);
-        }
-      }
 
       // Paddle collisions (any ball vs any paddle)
       const deflectMul = paddleTier.deflectMul;
@@ -876,13 +1112,25 @@
         for (const p of state.paddles) {
           if (!circleRectCollision(ball.x, ball.y, ball.r, p.x - p.w / 2, p.y - p.h / 2, p.w, p.h)) continue;
           ball.y = p.y - p.h / 2 - ball.r - 0.5;
-          ball.vy = -Math.abs(ball.vy);
-          const offset = (ball.x - p.x) / (p.w / 2);
-          ball.vx = clamp(ball.vx + offset * 1.5 * deflectMul, -15, 15);
-          state.rage.combo = 0;
-          woodfishTok(audio, 0.55);
-          break;
-        }
+            ball.vy = -Math.abs(ball.vy);
+            const offset = (ball.x - p.x) / (p.w / 2);
+            ball.vx = clamp(ball.vx + offset * 1.5 * deflectMul, -15, 15);
+            state.rage.combo = 0;
+            emitParticles(ball.x, p.y - 4, {
+              count: 12,
+              color: "rgba(246,211,122,0.78)",
+              colorAlt: "rgba(245,236,210,0.45)",
+              angle: -Math.PI / 2,
+              spread: Math.PI * 0.7,
+              speedMin: 0.9,
+              speedMax: 2.6,
+              lifeMin: 260,
+              lifeMax: 620,
+              gravity: 0.004,
+            });
+            woodfishTok(audio, 0.55);
+            break;
+          }
       }
 
       // Brick movement
@@ -903,21 +1151,41 @@
           reflectBallOnRect(ball, b.x, b.y, b.w, b.h);
           b.hp -= 1;
           state.rage.combo += 1;
-          woodfishTok(audio, 0.6);
-          if (b.hp <= 0) {
-            state.pendingMerit += b.sin;
-            state.floaters.push({ x: b.x + b.w / 2, y: b.y + b.h / 2, text: `-${b.sin} 罪 → +${b.sin} 功德`, ttl: 900, color: "rgba(246,211,122,0.96)" });
-            maybeDropPowerup(b);
-            state.bricks.splice(i, 1);
-            i -= 1;
-            updateHUD();
-            if (state.bricks.length === 0) bankPendingAndAdvance();
-          } else {
-            state.floaters.push({ x: b.x + b.w / 2, y: b.y + b.h / 2, text: `罪孽尚存（${b.hp}）`, ttl: 500, color: "rgba(233,238,248,0.72)" });
+            woodfishTok(audio, 0.6);
+            if (b.hp <= 0) {
+              state.pendingMerit += b.sin;
+              state.floaters.push({ x: b.x + b.w / 2, y: b.y + b.h / 2, text: `-${b.sin} 罪 → +${b.sin} 功德`, ttl: 900, color: "rgba(246,211,122,0.96)" });
+              emitParticles(b.x + b.w / 2, b.y + b.h / 2, {
+                count: 16 + Math.min(12, b.hpMax * 3),
+                color: isFinite(b.moveSpeed) && b.moveSpeed > 0 ? "rgba(255,120,60,0.75)" : "rgba(246,211,122,0.82)",
+                colorAlt: "rgba(111,167,155,0.62)",
+                speedMin: 1.0,
+                speedMax: 3.4,
+                lifeMin: 360,
+                lifeMax: 880,
+                gravity: 0.006,
+              });
+              maybeDropPowerup(b);
+              state.bricks.splice(i, 1);
+              i -= 1;
+              updateHUD();
+              if (state.bricks.length === 0) bankPendingAndAdvance();
+            } else {
+              state.floaters.push({ x: b.x + b.w / 2, y: b.y + b.h / 2, text: `罪孽尚存（${b.hp}）`, ttl: 500, color: "rgba(233,238,248,0.72)" });
+              emitParticles(b.x + b.w / 2, b.y + b.h / 2, {
+                count: 7,
+                color: "rgba(245,236,210,0.38)",
+                colorAlt: "rgba(111,167,155,0.3)",
+                speedMin: 0.6,
+                speedMax: 1.8,
+                lifeMin: 180,
+                lifeMax: 420,
+                gravity: 0.003,
+              });
+            }
+            break;
           }
-          break;
         }
-      }
 
       // Powerups
       for (let i = 0; i < state.powerups.length; i++) {
@@ -944,13 +1212,29 @@
       // Floaters
       for (let i = 0; i < state.floaters.length; i++) {
         const f = state.floaters[i];
-        f.ttl -= dtMs;
-        f.y -= 0.04 * dtMs;
+        f.ttl -= frameMs;
+        f.y -= 0.04 * frameMs;
         if (f.ttl <= 0) {
           state.floaters.splice(i, 1);
           i -= 1;
         }
       }
+
+      for (let i = 0; i < state.particles.length; i++) {
+        const p = state.particles[i];
+        p.ttl -= frameMs;
+        p.vx *= Math.pow(p.drag ?? 0.992, frameMs / 16.6667);
+        p.vy *= Math.pow(p.drag ?? 0.992, frameMs / 16.6667);
+        p.vy += (p.gravity ?? 0.006) * (frameMs / 16.6667);
+        p.x += p.vx * (frameMs / 16.6667);
+        p.y += p.vy * (frameMs / 16.6667);
+        if (p.ttl <= 0) {
+          state.particles.splice(i, 1);
+          i -= 1;
+        }
+      }
+
+      audio.updateBgm();
 
       // Fall out per ball
       for (let i = 0; i < state.balls.length; i++) {
@@ -1404,6 +1688,19 @@
         }
       }
 
+      for (const particle of state.particles) {
+        const alpha = clamp(particle.ttl / particle.maxTtl, 0, 1);
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = particle.color;
+        ctx.shadowColor = particle.color;
+        ctx.shadowBlur = 12 * (particle.glow ?? 0.4);
+        ctx.beginPath();
+        ctx.arc(particle.x, particle.y, Math.max(0.6, particle.size * alpha), 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
       // Paddles (法器)
       for (const p of state.paddles) {
         const isRage = state.rage.active;
@@ -1481,10 +1778,13 @@
       // Powerups
       for (const pu of state.powerups) {
         ctx.save();
+        ctx.shadowColor = pu.kind === "wide" ? "rgba(120,170,255,0.45)" : pu.kind === "slow" ? "rgba(120,255,210,0.45)" : "rgba(246,211,122,0.45)";
+        ctx.shadowBlur = 16;
         ctx.fillStyle = pu.kind === "wide" ? "rgba(120,170,255,0.92)" : pu.kind === "slow" ? "rgba(120,255,210,0.86)" : "rgba(246,211,122,0.94)";
         ctx.beginPath();
         ctx.arc(pu.x, pu.y, pu.r, 0, Math.PI * 2);
         ctx.fill();
+        ctx.shadowBlur = 0;
         ctx.fillStyle = "rgba(0,0,0,0.35)";
         ctx.font = "800 12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace";
         ctx.textAlign = "center";
@@ -1522,11 +1822,14 @@
     function onPointerMove(clientX) {
       const rect = canvas.getBoundingClientRect();
       const x = ((clientX - rect.left) / rect.width) * bounds.w;
-      state.controlX = clamp(x, 8, bounds.w - 8);
+      state.targetControlX = clamp(x, 8, bounds.w - 8);
       const b = primaryBall();
       const p0 = primaryPaddle();
-      if (p0) p0.x = clamp(state.controlX, p0.w / 2 + 8, bounds.w - p0.w / 2 - 8);
-      if (b && !b.launched && p0) b.x = p0.x;
+      if (!b?.launched && p0) {
+        state.controlX = state.targetControlX;
+        p0.x = clamp(state.controlX, p0.w / 2 + 8, bounds.w - p0.w / 2 - 8);
+        b.x = p0.x;
+      }
     }
 
     function onAimMove(clientX, clientY) {
@@ -1541,6 +1844,8 @@
         activePointerId = e.pointerId;
         canvas.setPointerCapture(activePointerId);
         await audio.enable();
+        audio.startBgm();
+        ui.syncAudio(audio.bgmEnabled);
         onPointerMove(e.clientX);
         onAimMove(e.clientX, e.clientY);
       });
@@ -1556,14 +1861,22 @@
         launchBall();
         activePointerId = null;
       });
+      canvas.addEventListener("pointercancel", () => {
+        activePointerId = null;
+      });
       window.addEventListener("keydown", (e) => {
+        if (!audio.enabled && (e.key === " " || e.key === "Enter")) {
+          audio.enable().then(() => {
+            audio.startBgm();
+            ui.syncAudio(audio.bgmEnabled);
+          });
+        }
         if (e.key === "p" || e.key === "P") togglePause();
         if (e.key === "r" || e.key === "R") restartStage();
       });
     }
 
     function tick() {
-      resizeCanvas();
       const t = nowMs();
       const dt = t - state.lastTickMs;
       state.lastTickMs = t;
@@ -1582,9 +1895,11 @@
 
   function wireUI({ startMode, getSave, resetSave, buyWoodfish, buyPaddle }) {
       const els = {
-      modeCampaign: document.getElementById("btnModeCampaign"),
-      modeEndless: document.getElementById("btnModeEndless"),
-      records: document.getElementById("btnRecords"),
+        modeCampaign: document.getElementById("btnModeCampaign"),
+        modeEndless: document.getElementById("btnModeEndless"),
+        records: document.getElementById("btnRecords"),
+        landscape: document.getElementById("btnLandscape"),
+        audio: document.getElementById("btnAudio"),
 
       overlay: document.getElementById("overlay"),
       overlayTitle: document.getElementById("overlayTitle"),
@@ -1886,17 +2201,29 @@
       els.recordsWrap.classList.remove("hidden");
     }
 
-    function closeRecords() {
-      els.recordsWrap.classList.add("hidden");
-    }
+      function closeRecords() {
+        els.recordsWrap.classList.add("hidden");
+      }
 
-    els.overlayPrimary.addEventListener("click", () => overlayPrimaryHandler?.());
-    els.overlaySecondary.addEventListener("click", () => overlaySecondaryHandler?.());
+      function syncAudio(enabled) {
+        if (!els.audio) return;
+        els.audio.textContent = `灵音：${enabled ? "开" : "关"}`;
+        els.audio.classList.toggle("btn-primary", enabled);
+      }
+
+      function syncLandscape(enabled) {
+        if (!els.landscape) return;
+        els.landscape.textContent = `横屏：${enabled ? "开" : "关"}`;
+        els.landscape.classList.toggle("btn-primary", enabled);
+      }
+
+      els.overlayPrimary.addEventListener("click", () => overlayPrimaryHandler?.());
+      els.overlaySecondary.addEventListener("click", () => overlaySecondaryHandler?.());
 
     els.modeCampaign.addEventListener("click", () => startMode(MODE.CAMPAIGN));
     els.modeEndless.addEventListener("click", () => startMode(MODE.ENDLESS));
-    els.records.addEventListener("click", () => openRecords());
-    els.btnCloseRecords.addEventListener("click", () => closeRecords());
+      els.records.addEventListener("click", () => openRecords());
+      els.btnCloseRecords.addEventListener("click", () => closeRecords());
 
     els.recordsWrap.addEventListener("click", (e) => {
       if (e.target === els.recordsWrap) closeRecords();
@@ -1910,8 +2237,19 @@
       });
     });
 
-    return { setHUD, showOverlay, hideOverlay, overlayVisible, recordsVisible, openRecords };
-  }
+      return {
+        setHUD,
+        showOverlay,
+        hideOverlay,
+        overlayVisible,
+        recordsVisible,
+        openRecords,
+        syncAudio,
+        syncLandscape,
+        audioButton: els.audio,
+        landscapeButton: els.landscape,
+      };
+    }
 
   makeGame(document.getElementById("game"));
 })();

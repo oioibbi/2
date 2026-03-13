@@ -83,6 +83,14 @@ body {
   box-shadow: inset 0 1px 0 rgba(255, 243, 204, 0.12), 0 0 18px rgba(216, 184, 107, 0.12);
 }
 
+#btnAudio {
+  border-color: rgba(111, 167, 155, 0.24);
+}
+
+#btnLandscape {
+  border-color: rgba(216, 184, 107, 0.24);
+}
+
 .stage {
   position: relative;
   display: flex;
@@ -95,7 +103,8 @@ body {
 .game-shell {
   position: relative;
   width: min(100%, calc((100dvh - 92px) * 16 / 9));
-  height: min(calc(100dvh - 92px), calc(100vw * 9 / 16));
+  aspect-ratio: 16 / 9;
+  height: auto;
   max-width: 1600px;
   max-height: calc(100dvh - 92px);
   filter: drop-shadow(0 20px 40px rgba(0, 0, 0, 0.38));
@@ -386,7 +395,6 @@ canvas#game {
 
   .game-shell {
     width: min(100%, calc((100dvh - 108px) * 16 / 9));
-    height: min(calc(100dvh - 108px), calc(100vw * 9 / 16));
     max-height: calc(100dvh - 108px);
   }
 
@@ -449,8 +457,8 @@ canvas#game {
   }
 
   .game-shell {
-    width: 100%;
-    height: min(calc(100dvh - 122px), 78dvh);
+    width: min(100%, calc((100dvh - 122px) * 16 / 9));
+    max-width: 100%;
     max-height: calc(100dvh - 122px);
   }
 
@@ -490,4 +498,89 @@ canvas#game {
     font-size: 12px;
     padding: 7px 9px;
   }
+}
+
+body.mobile-landscape .app {
+  grid-template-rows: auto 1fr;
+}
+
+body.mobile-landscape .topbar {
+  padding: 6px 8px;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+body.mobile-landscape .brand {
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  min-width: 0;
+}
+
+body.mobile-landscape .brand .title {
+  font-size: 18px;
+}
+
+body.mobile-landscape .brand .subtitle {
+  max-width: none;
+  text-align: left;
+  font-size: 9px;
+}
+
+body.mobile-landscape .top-actions {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
+  flex: 1 1 auto;
+}
+
+body.mobile-landscape .top-actions .btn {
+  padding: 7px 6px;
+  font-size: 11px;
+  border-radius: 10px;
+}
+
+body.mobile-landscape .stage {
+  padding: 4px;
+}
+
+body.mobile-landscape .game-shell {
+  width: min(100%, calc((100dvh - 74px) * 16 / 9));
+  max-height: calc(100dvh - 74px);
+}
+
+body.mobile-landscape .hud {
+  top: 5px;
+  left: 5px;
+  right: 5px;
+  gap: 3px;
+}
+
+body.mobile-landscape .hud-row {
+  gap: 3px;
+}
+
+body.mobile-landscape .hud-row-primary .pill,
+body.mobile-landscape .hud-row-secondary .pill {
+  font-size: 9px;
+  padding: 4px 6px;
+}
+
+body.mobile-landscape .hud-extra,
+body.mobile-landscape .hud-row.small {
+  display: none;
+}
+
+body.mobile-landscape .hud-row-secondary {
+  justify-content: flex-start;
+}
+
+body.mobile-landscape .hint {
+  font-size: 9px;
+}
+
+body.mobile-landscape .panel,
+body.mobile-landscape .panel-wide {
+  max-height: 92dvh;
 }

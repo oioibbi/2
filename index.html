@@ -17,6 +17,8 @@
           <button id="btnModeCampaign" class="btn btn-primary">闯关</button>
           <button id="btnModeEndless" class="btn">无尽</button>
           <button id="btnRecords" class="btn">功德榜</button>
+          <button id="btnLandscape" class="btn">横屏：关</button>
+          <button id="btnAudio" class="btn">灵音：开</button>
         </div>
       </header>
 
@@ -25,16 +27,16 @@
           <canvas id="game" width="960" height="540" aria-label="木鱼打罪游戏画布"></canvas>
           <div class="hud" aria-live="polite">
             <div class="hud-row hud-row-primary">
-              <div class="pill" id="hudMode">模式：—</div>
-              <div class="pill" id="hudLevel">小关：—</div>
-              <div class="pill" id="hudTitle">境界：—</div>
-              <div class="pill" id="hudLives">命：—</div>
+              <div class="pill hud-critical" id="hudMode">模式：—</div>
+              <div class="pill hud-critical" id="hudLevel">小关：—</div>
+              <div class="pill hud-critical" id="hudTitle">境界：—</div>
+              <div class="pill hud-critical" id="hudLives">命：—</div>
             </div>
             <div class="hud-row hud-row-secondary">
-              <div class="pill pill-gold" id="hudPending">本关功德：—</div>
-              <div class="pill" id="hudBanked">已入账：—</div>
-              <div class="pill" id="hudTotal">余额功德：—</div>
-              <div class="pill" id="hudLifetime">累计功德：—</div>
+              <div class="pill pill-gold hud-critical" id="hudPending">本关功德：—</div>
+              <div class="pill hud-extra" id="hudBanked">已入账：—</div>
+              <div class="pill hud-extra" id="hudTotal">余额功德：—</div>
+              <div class="pill hud-extra" id="hudLifetime">累计功德：—</div>
             </div>
             <div class="hud-row small">
               <div class="hint">拖动/移动控制挡板；点击发射；P 暂停；R 重开本关</div>
