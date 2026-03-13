@@ -3,71 +3,71 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>鏈ㄩ奔鎵撶姜</title>
+    <title>木鱼打罪</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <div class="app">
       <header class="topbar">
         <div class="brand">
-          <div class="title">鏈ㄩ奔鎵撶姜</div>
-          <div class="subtitle">鎵撶缃爾锛岃浆鎴愬姛寰凤紙閫氬叧鎵嶅叆璐︼級</div>
+          <div class="title">木鱼打罪</div>
+          <div class="subtitle">打碎罪砖，转成功德；只有通关才会入账</div>
         </div>
         <div class="top-actions">
-          <button id="btnModeCampaign" class="btn btn-primary">闂叧</button>
-          <button id="btnModeEndless" class="btn">鏃犲敖</button>
-          <button id="btnRecords" class="btn">鍔熷痉姒?/button>
-          <button id="btnLandscape" class="btn">妯睆锛氬叧</button>
-          <button id="btnAudio" class="btn">鐏甸煶锛氬紑</button>
+          <button id="btnModeCampaign" class="btn btn-primary">闯关</button>
+          <button id="btnModeEndless" class="btn">无尽</button>
+          <button id="btnRecords" class="btn">功德榜</button>
+          <button id="btnLandscape" class="btn">横屏：关</button>
+          <button id="btnAudio" class="btn">灵音：开</button>
         </div>
       </header>
 
       <main class="stage">
         <div class="game-shell">
-          <canvas id="game" width="960" height="540" aria-label="鏈ㄩ奔鎵撶姜娓告垙鐢诲竷"></canvas>
+          <canvas id="game" width="960" height="540" aria-label="木鱼打罪游戏画布"></canvas>
           <div class="hud" aria-live="polite">
             <div class="hud-row hud-row-primary">
-              <div class="pill hud-critical" id="hudMode">妯″紡锛氣€?/div>
-              <div class="pill hud-critical" id="hudLevel">灏忓叧锛氣€?/div>
-              <div class="pill hud-critical" id="hudTitle">澧冪晫锛氣€?/div>
-              <div class="pill hud-critical" id="hudLives">鍛斤細鈥?/div>
+              <div class="pill hud-critical" id="hudMode">模式：—</div>
+              <div class="pill hud-critical" id="hudLevel">小关：—</div>
+              <div class="pill hud-critical" id="hudTitle">境界：—</div>
+              <div class="pill hud-critical" id="hudLives">命：—</div>
             </div>
             <div class="hud-row hud-row-secondary">
-              <div class="pill pill-gold hud-critical" id="hudPending">鏈叧鍔熷痉锛氣€?/div>
-              <div class="pill hud-extra" id="hudBanked">宸插叆璐︼細鈥?/div>
-              <div class="pill hud-extra" id="hudTotal">浣欓鍔熷痉锛氣€?/div>
-              <div class="pill hud-extra" id="hudLifetime">绱鍔熷痉锛氣€?/div>
+              <div class="pill pill-gold hud-critical" id="hudPending">本关功德：—</div>
+              <div class="pill hud-extra" id="hudBanked">已入账：—</div>
+              <div class="pill hud-extra" id="hudTotal">余额功德：—</div>
+              <div class="pill hud-extra" id="hudLifetime">累计功德：—</div>
             </div>
             <div class="hud-row small">
-              <div class="hint">鎷栧姩/绉诲姩鎺у埗鎸℃澘锛涚偣鍑诲彂灏勶紱P 鏆傚仠锛汻 閲嶅紑鏈叧</div>
+              <div class="hint">拖动控制法器；点击发射木鱼；P 暂停；R 重开本关</div>
             </div>
           </div>
           <div id="mobileTip" class="mobile-tip hidden" aria-live="polite"></div>
         </div>
         <div id="overlay" class="overlay hidden">
           <div class="panel">
-            <div class="panel-title" id="overlayTitle">鈥?/div>
+            <div class="panel-title" id="overlayTitle">—</div>
             <div class="panel-body" id="overlayBody"></div>
             <div class="panel-actions">
-              <button id="btnOverlayPrimary" class="btn btn-primary">缁х画</button>
-              <button id="btnOverlaySecondary" class="btn">杩斿洖</button>
+              <button id="btnOverlayPrimary" class="btn btn-primary">继续</button>
+              <button id="btnOverlaySecondary" class="btn">返回</button>
             </div>
           </div>
         </div>
 
-        <div id="records" class="records hidden" role="dialog" aria-modal="true" aria-label="鍔熷痉姒滀笌鍘嗗彶璁板綍">
+        <div id="records" class="records hidden" role="dialog" aria-modal="true" aria-label="功德榜与历史记录">
           <div class="panel panel-wide">
-            <div class="panel-title">鍔熷痉姒滀笌鍘嗗彶</div>
+            <div class="panel-title">功德榜与历史</div>
             <div class="tabs">
-              <button class="tab active" data-tab="leaderboard">鎺掕姒?/button>
-              <button class="tab" data-tab="history">鍘嗗彶璁板綍</button>
-              <button class="tab" data-tab="profile">绱鍔熷痉</button>
-              <button class="tab" data-tab="shop">鍟嗗簵</button>
-              <button class="tab" data-tab="titles">澧冪晫</button>
+              <button class="tab active" data-tab="leaderboard">排行榜</button>
+              <button class="tab" data-tab="history">历史记录</button>
+              <button class="tab" data-tab="profile">累计功德</button>
+              <button class="tab" data-tab="shop">商店</button>
+              <button class="tab" data-tab="titles">境界</button>
             </div>
             <div class="tab-body" id="tabBody"></div>
             <div class="panel-actions">
-              <button id="btnCloseRecords" class="btn btn-primary">鍏抽棴</button>
+              <button id="btnCloseRecords" class="btn btn-primary">关闭</button>
             </div>
           </div>
         </div>

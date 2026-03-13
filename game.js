@@ -12,42 +12,42 @@
   const fmtInt = (n) => `${Math.max(0, Math.floor(n))}`;
 
   const WOODFISH_TIERS = [
-    { key: "bronze", name: "闈掗摐鏈ㄩ奔", rMul: 1.0, speedMul: 1.0, cost: 0 },
-    { key: "blackiron", name: "榛戦搧鏈ㄩ奔", rMul: 1.12, speedMul: 0.95, cost: 2400 },
-    { key: "gold", name: "榛勯噾鏈ㄩ奔", rMul: 1.25, speedMul: 0.9, cost: 8200 },
-    { key: "diamond", name: "閽荤煶鏈ㄩ奔", rMul: 1.42, speedMul: 0.86, cost: 22000 },
-    { key: "rainbow", name: "涓冨僵鏈ㄩ奔", rMul: 1.62, speedMul: 0.82, cost: 52000 },
+    { key: "bronze", name: "青铜木鱼", rMul: 1.0, speedMul: 1.0, cost: 0 },
+    { key: "blackiron", name: "黑铁木鱼", rMul: 1.12, speedMul: 0.95, cost: 2400 },
+    { key: "gold", name: "黄金木鱼", rMul: 1.25, speedMul: 0.9, cost: 8200 },
+    { key: "diamond", name: "钻石木鱼", rMul: 1.42, speedMul: 0.86, cost: 22000 },
+    { key: "rainbow", name: "七彩木鱼", rMul: 1.62, speedMul: 0.82, cost: 52000 },
   ];
 
   const PADDLE_TIERS = [
-    { key: "mortal", name: "鍑″櫒", baseW: 140, deflectMul: 1.0, cost: 0 },
-    { key: "spirit", name: "鐏靛櫒", baseW: 152, deflectMul: 1.08, cost: 1800 },
-    { key: "dharma", name: "娉曞櫒", baseW: 168, deflectMul: 1.16, cost: 7200 },
-    { key: "treasure", name: "瀹濆櫒", baseW: 186, deflectMul: 1.24, cost: 20000 },
-    { key: "sacred", name: "鍦ｅ櫒", baseW: 206, deflectMul: 1.33, cost: 48000 },
+    { key: "mortal", name: "凡器", baseW: 140, deflectMul: 1.0, cost: 0 },
+    { key: "spirit", name: "灵器", baseW: 152, deflectMul: 1.08, cost: 1800 },
+    { key: "dharma", name: "法器", baseW: 168, deflectMul: 1.16, cost: 7200 },
+    { key: "treasure", name: "宝器", baseW: 186, deflectMul: 1.24, cost: 20000 },
+    { key: "sacred", name: "圣器", baseW: 206, deflectMul: 1.33, cost: 48000 },
   ];
 
   const TITLES = [
-    { name: "绛戝熀", need: 0 },
+    { name: "筑基", need: 0 },
     { name: "开光", need: 500 },
-    { name: "铻嶅悎", need: 1500 },
-    { name: "蹇冨姩", need: 3500 },
-    { name: "閲戜腹", need: 7000 },
-    { name: "鍏冨┐", need: 12000 },
-    { name: "鍑虹獚", need: 20000 },
-    { name: "鍒嗙", need: 32000 },
-    { name: "鍚堜綋", need: 50000 },
-    { name: "娲炶櫄", need: 76000 },
-    { name: "澶т箻", need: 110000 },
-    { name: "娓″姭", need: 160000 },
-    { name: "鏁ｄ粰", need: 230000, gate: "post_tribulation" },
-    { name: "鐪熶粰", need: 320000, gate: "post_tribulation" },
-    { name: "澶箼鏁ｄ粰", need: 420000, gate: "post_tribulation" },
-    { name: "澶箼鐪熶粰", need: 540000, gate: "post_tribulation" },
-    { name: "澶箼鐜勪粰", need: 680000, gate: "post_tribulation" },
-    { name: "澶箼閲戜粰", need: 850000, gate: "post_tribulation" },
-    { name: "澶х綏閲戜粰", need: 1050000, gate: "post_tribulation" },
-    { name: "娣峰厓澶х綏閲戜粰", need: 1300000, gate: "post_tribulation" },
+    { name: "融合", need: 1500 },
+    { name: "心动", need: 3500 },
+    { name: "金丹", need: 7000 },
+    { name: "元婴", need: 12000 },
+    { name: "出窍", need: 20000 },
+    { name: "分神", need: 32000 },
+    { name: "合体", need: 50000 },
+    { name: "洞虚", need: 76000 },
+    { name: "大乘", need: 110000 },
+    { name: "渡劫", need: 160000 },
+    { name: "散仙", need: 230000, gate: "post_tribulation" },
+    { name: "真仙", need: 320000, gate: "post_tribulation" },
+    { name: "太乙散仙", need: 420000, gate: "post_tribulation" },
+    { name: "太乙真仙", need: 540000, gate: "post_tribulation" },
+    { name: "太乙玄仙", need: 680000, gate: "post_tribulation" },
+    { name: "太乙金仙", need: 850000, gate: "post_tribulation" },
+    { name: "大罗金仙", need: 1050000, gate: "post_tribulation" },
+    { name: "混元大罗金仙", need: 1300000, gate: "post_tribulation" },
   ];
 
   function titleGateSatisfied(save) {
@@ -64,7 +64,7 @@
       else break;
     }
     if (current.gate === "post_tribulation" && !titleGateSatisfied(save)) {
-      const trib = TITLES.find((t) => t.name === "娓″姭") ?? TITLES[0];
+      const trib = TITLES.find((t) => t.name === "渡劫") ?? TITLES[0];
       return {
         name: trib.name,
         locked: true,
@@ -91,7 +91,7 @@
       profile: { totalMerit: 0, lifetimeMeritEarned: 0, createdAt: iso, updatedAt: iso },
       progress: { maxCampaignLevelCleared: 0, campaignCleared: false },
       inventory: {
-        woodfishTier: 0, // 0-4: 闈掗摐/榛戦搧/榛勯噾/閽荤煶/涓冨僵
+        woodfishTier: 0, // 0-4: 青铜/黑铁/黄金/钻石/七彩
         paddleTier: 0, // 0-4
       },
       preferences: {
@@ -749,7 +749,7 @@
     function updateHUD() {
       const realmInfo = getCurrentRealm(save);
       ui.setHUD({
-        mode: state.mode === MODE.CAMPAIGN ? "闂叧" : "鏃犲敖",
+        mode: state.mode === MODE.CAMPAIGN ? "闯关" : "无尽",
         stage: state.mode === MODE.CAMPAIGN ? `${state.levelIndex + 1}` : `${state.waveIndex + 1}`,
         title: realmInfo.name,
         lives: `${state.lives}`,
@@ -836,7 +836,7 @@
       saveToStorage(save);
 
       showOverlay(
-        "鏈淇缁撴潫",
+        "本次修行结束",
         [`模式：${state.mode === MODE.CAMPAIGN ? "闯关" : "无尽"}`, `到达：${reached}`, `本次已入账功德：<span class="mono">${fmtInt(state.bankedMerit)}</span>`, `累计功德：<span class="mono">${fmtInt(save.profile.totalMerit)}</span>`].join("<br/>"),
         { primary: "再来一局", secondary: "查看功德榜" },
         () => {
@@ -886,7 +886,7 @@
       save.profile.totalMerit = Math.floor((save.profile.totalMerit ?? 0) + gained);
       save.profile.lifetimeMeritEarned = Math.floor((save.profile.lifetimeMeritEarned ?? 0) + gained);
       saveToStorage(save);
-      state.floaters.push({ x: bounds.w / 2, y: bounds.h / 2, text: `鍔熷痉鍏ヨ处 +${gained}`, ttl: 1200, color: "rgba(246,211,122,0.98)" });
+      state.floaters.push({ x: bounds.w / 2, y: bounds.h / 2, text: `功德入账 +${gained}`, ttl: 1200, color: "rgba(246,211,122,0.98)" });
       emitParticles(bounds.w / 2, bounds.h / 2, {
         count: 28,
         color: "rgba(246,211,122,0.9)",
@@ -909,7 +909,7 @@
           save.progress.campaignCleared = true;
           saveToStorage(save);
           showOverlay(
-            "闂叧鍦嗘弧",
+            "闯关圆满",
             `你已完成 12 小关，本次已入账功德：<span class="mono">${fmtInt(state.bankedMerit)}</span><br/>可继续挑战无尽模式。`,
             { primary: "继续闯关循环", secondary: "去无尽" },
             () => {
@@ -926,7 +926,7 @@
         }
         loadLevel(state.levelIndex);
         showOverlay(
-          `閫氬叧锛氱 ${state.levelIndex} 灏忓叧`,
+          `通关：第 ${state.levelIndex} 小关`,
           "本关功德已入账。下一关会进一步考验控球与预判。",
           { primary: "继续", secondary: "退出" },
           () => hideOverlay(true),
@@ -964,7 +964,7 @@
       const p = primaryPaddle();
       if (kind === "wide") {
         state.effects.wideUntilMs = Math.max(state.effects.wideUntilMs, t + 12000);
-        state.floaters.push({ x: p.x, y: p.y - 24, text: "娉曞櫒鍔犲", ttl: 900, color: "rgba(120,170,255,0.95)" });
+        state.floaters.push({ x: p.x, y: p.y - 24, text: "法器加宽", ttl: 900, color: "rgba(120,170,255,0.95)" });
       } else if (kind === "slow") {
         state.effects.slowUntilMs = Math.max(state.effects.slowUntilMs, t + 9000);
         state.floaters.push({ x: p.x, y: p.y - 24, text: "蹇冨畾鍒欐參", ttl: 900, color: "rgba(120,255,210,0.86)" });
@@ -1084,7 +1084,7 @@
             });
           }
 
-            state.floaters.push({ x: bounds.w / 2, y: bounds.h / 2, text: "鐙傛毚锛氫紬鏈ㄩ奔榻愰福", ttl: 900, color: "rgba(255,120,60,0.95)" });
+            state.floaters.push({ x: bounds.w / 2, y: bounds.h / 2, text: "狂暴：众木鱼齐鸣", ttl: 900, color: "rgba(255,120,60,0.95)" });
             emitParticles(bounds.w / 2, bounds.h / 2, {
               count: 34,
               color: "rgba(255,120,60,0.9)",
@@ -1212,7 +1212,7 @@
             woodfishTok(audio, 0.6);
             if (b.hp <= 0) {
               state.pendingMerit += b.sin;
-              state.floaters.push({ x: b.x + b.w / 2, y: b.y + b.h / 2, text: `-${b.sin} 缃?鈫?+${b.sin} 鍔熷痉`, ttl: 900, color: "rgba(246,211,122,0.96)" });
+              state.floaters.push({ x: b.x + b.w / 2, y: b.y + b.h / 2, text: `-${b.sin} 罪孽 → +${b.sin} 功德`, ttl: 900, color: "rgba(246,211,122,0.96)" });
               emitParticles(b.x + b.w / 2, b.y + b.h / 2, {
                 count: 16 + Math.min(12, b.hpMax * 3),
                 color: isFinite(b.moveSpeed) && b.moveSpeed > 0 ? "rgba(255,120,60,0.75)" : "rgba(246,211,122,0.82)",
@@ -2130,8 +2130,8 @@
     function showOverlay(title, bodyHtml, labels, onPrimary, onSecondary) {
       els.overlayTitle.textContent = title;
       els.overlayBody.innerHTML = bodyHtml;
-      els.overlayPrimary.textContent = labels?.primary ?? "缁х画";
-      els.overlaySecondary.textContent = labels?.secondary ?? "杩斿洖";
+      els.overlayPrimary.textContent = labels?.primary ?? "继续";
+      els.overlaySecondary.textContent = labels?.secondary ?? "返回";
       overlayPrimaryHandler = onPrimary ?? null;
       overlaySecondaryHandler = onSecondary ?? null;
       els.overlay.classList.remove("hidden");
@@ -2167,10 +2167,10 @@
     }
 
     function renderTable(list) {
-      if (!list.length) return `<div class="muted" style="margin: 0 4px;">鏆傛棤璁板綍</div>`;
+      if (!list.length) return `<div class="muted" style="margin: 0 4px;">暂无记录</div>`;
       return `
         <table class="table">
-          <thead><tr><th>#</th><th>鍔熷痉</th><th class="mono">鍒拌揪</th><th>鏃堕棿</th></tr></thead>
+          <thead><tr><th>#</th><th>功德</th><th class="mono">到达</th><th>时间</th></tr></thead>
           <tbody>
             ${list
               .map((it, idx) => {
@@ -2193,14 +2193,14 @@
       const c = save.leaderboard?.campaign ?? [];
       const e = save.leaderboard?.endless ?? [];
       els.tabBody.innerHTML = `
-        <div class="muted" style="margin: 0 4px 10px;">鏈湴 Top 10锛堟寜鍗曟娓哥帺宸插叆璐﹀姛寰凤級銆?/div>
+        <div class="muted" style="margin: 0 4px 10px;">本地 Top 10（按单次游玩已入账功德排序）。</div>
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 12px;">
           <div>
-            <div style="font-weight:750; margin: 0 4px 8px;">闂叧姒?/div>
+            <div style="font-weight:750; margin: 0 4px 8px;">闯关榜</div>
             ${renderTable(c)}
           </div>
           <div>
-            <div style="font-weight:750; margin: 0 4px 8px;">鏃犲敖姒?/div>
+            <div style="font-weight:750; margin: 0 4px 8px;">无尽榜</div>
             ${renderTable(e)}
           </div>
         </div>
@@ -2211,17 +2211,17 @@
       const save = getSave();
       const list = save.history ?? [];
       if (!list.length) {
-        els.tabBody.innerHTML = `<div class="muted" style="margin: 0 4px;">鏆傛棤鍘嗗彶璁板綍</div>`;
+        els.tabBody.innerHTML = `<div class="muted" style="margin: 0 4px;">暂无历史记录</div>`;
         return;
       }
       els.tabBody.innerHTML = `
         <table class="table">
-          <thead><tr><th>鏃堕棿</th><th>妯″紡</th><th class="mono">鍒拌揪</th><th class="mono">宸插叆璐?/th><th class="mono">鏃堕暱</th></tr></thead>
+          <thead><tr><th>时间</th><th>模式</th><th class="mono">到达</th><th class="mono">已入账</th><th class="mono">时长</th></tr></thead>
           <tbody>
             ${list
               .map((it) => {
                 const date = new Date(it.at).toLocaleString();
-                const modeLabel = it.mode === MODE.CAMPAIGN ? "闂叧" : "鏃犲敖";
+                const modeLabel = it.mode === MODE.CAMPAIGN ? "闯关" : "无尽";
                 return `<tr>
                   <td>${escapeHtml(date)}</td>
                   <td>${escapeHtml(modeLabel)}</td>
@@ -2233,7 +2233,7 @@
               .join("")}
           </tbody>
         </table>
-        <div class="muted" style="margin: 10px 4px 0;">鎻愮ず锛氭鍗?鍘嗗彶鍙繚瀛樺湪鏈満娴忚鍣?localStorage銆?/div>
+        <div class="muted" style="margin: 10px 4px 0;">提示：榜单与历史仅保存在当前浏览器的 localStorage 中。</div>
       `;
     }
 
@@ -2245,17 +2245,17 @@
       const paddleTier = clamp(save.inventory?.paddleTier ?? 0, 0, 4);
       els.tabBody.innerHTML = `
         <div style="display:grid; gap: 10px; margin: 0 4px;">
-          <div class="pill pill-gold">鍔熷痉浣欓锛?span class="mono">${fmtInt(p.totalMerit ?? 0)}</span></div>
-          <div class="pill">绱鍔熷痉锛堢粓韬級锛?span class="mono">${fmtInt(p.lifetimeMeritEarned ?? 0)}</span></div>
-          <div class="pill">澧冪晫锛?span class="mono">${escapeHtml(realmInfo.name)}</span>${realmInfo.locked ? "<span class='muted'>锛堝緟鍦嗘弧锛?/span>" : ""}</div>
-          <div class="pill">鏈ㄩ奔锛?span class="mono">${escapeHtml(WOODFISH_TIERS[woodfishTier].name)}</span>銆€娉曞櫒锛?span class="mono">${escapeHtml(PADDLE_TIERS[paddleTier].name)}</span></div>
+          <div class="pill pill-gold">功德余额：<span class="mono">${fmtInt(p.totalMerit ?? 0)}</span></div>
+          <div class="pill">累计功德（终身）：<span class="mono">${fmtInt(p.lifetimeMeritEarned ?? 0)}</span></div>
+          <div class="pill">当前境界：<span class="mono">${escapeHtml(realmInfo.name)}</span>${realmInfo.locked ? "<span class='muted'>（待圆满）</span>" : ""}</div>
+          <div class="pill">木鱼：<span class="mono">${escapeHtml(WOODFISH_TIERS[woodfishTier].name)}</span>　法器：<span class="mono">${escapeHtml(PADDLE_TIERS[paddleTier].name)}</span></div>
           <div class="muted">创建：${escapeHtml(new Date(p.createdAt ?? Date.now()).toLocaleString())}</div>
           <div class="muted">更新：${escapeHtml(new Date(p.updatedAt ?? Date.now()).toLocaleString())}</div>
           <div style="display:flex; gap: 8px; flex-wrap: wrap;">
-            <button class="btn" id="btnExport">瀵煎嚭瀛樻。</button>
-            <button class="btn" id="btnReset">娓呯┖鏈湴璁板綍</button>
+            <button class="btn" id="btnExport">导出存档</button>
+            <button class="btn" id="btnReset">清空本地记录</button>
           </div>
-          <div class="muted">瀵煎嚭鐢ㄤ簬鑷瓨/杩佺Щ锛涙竻绌轰細鍒犻櫎姒滃崟銆佸巻鍙层€佺疮璁″姛寰枫€?/div>
+          <div class="muted">导出可用于备份或迁移；清空会删除榜单、历史与累计功德。</div>
         </div>
       `;
       const btnExport = document.getElementById("btnExport");
@@ -2284,9 +2284,9 @@
 
       els.tabBody.innerHTML = `
         <div style="display:grid; gap: 12px; margin: 0 4px;">
-          <div class="pill pill-gold">鍔熷痉浣欓锛?span class="mono">${fmtInt(balance)}</span></div>
+          <div class="pill pill-gold">功德余额：<span class="mono">${fmtInt(balance)}</span></div>
           <div>
-            <div style="font-weight:800; margin: 0 2px 10px;">鏈ㄩ奔澶栬</div>
+            <div style="font-weight:800; margin: 0 2px 10px;">木鱼外观</div>
             <div class="skin-grid">
               ${WOODFISH_TIERS.map((t, idx) => {
                 const unlocked = idx <= woodfishTier;
@@ -2297,13 +2297,13 @@
                   <div class="skin-card ${unlocked ? "" : "locked"}">
                     <div class="skin-preview">
                       <div class="skin-woodfish ${klass}"></div>
-                      ${isCurrent ? `<div class="badge">宸茶澶?/div>` : ""}
-                      ${unlocked ? "" : `<div class="lock">鏈В閿?/div>`}
+                      ${isCurrent ? `<div class="badge">已装备</div>` : ""}
+                      ${unlocked ? "" : `<div class="lock">未解锁</div>`}
                     </div>
                     <div class="skin-name">${escapeHtml(t.name)}</div>
-                    <div class="skin-meta">鍗婂緞 脳${t.rMul}锛涢€熷害 脳${t.speedMul}</div>
+                    <div class="skin-meta">半径 ×${t.rMul}；速度 ×${t.speedMul}</div>
                     <div class="skin-meta">${idx === 0 ? "初始" : `价格：${fmtInt(t.cost)}`}</div>
-                    ${buyable ? `<div style="margin-top:8px;"><button class="btn btn-primary" data-buy="woodfish">瑙ｉ攣</button></div>` : ""}
+                    ${buyable ? `<div style="margin-top:8px;"><button class="btn btn-primary" data-buy="woodfish">解锁</button></div>` : ""}
                   </div>
                 `;
               }).join("")}
@@ -2311,7 +2311,7 @@
           </div>
 
           <div>
-            <div style="font-weight:800; margin: 2px 2px 10px;">娉曞櫒澶栬</div>
+            <div style="font-weight:800; margin: 2px 2px 10px;">法器外观</div>
             <div class="skin-grid">
               ${PADDLE_TIERS.map((t, idx) => {
                 const unlocked = idx <= paddleTier;
@@ -2322,8 +2322,8 @@
                   <div class="skin-card ${unlocked ? "" : "locked"}">
                     <div class="skin-preview">
                       <div class="skin-paddle ${klass}"></div>
-                      ${isCurrent ? `<div class="badge">宸茶澶?/div>` : ""}
-                      ${unlocked ? "" : `<div class="lock">鏈В閿?/div>`}
+                      ${isCurrent ? `<div class="badge">已装备</div>` : ""}
+                      ${unlocked ? "" : `<div class="lock">未解锁</div>`}
                     </div>
                     <div class="skin-name">${escapeHtml(t.name)}</div>
                     <div class="skin-meta">${idx === 0 ? "基础法器" : "飞剑法器"} · 宽度 ${fmtInt(t.baseW)} · 偏转 ×${t.deflectMul}</div>
@@ -2335,21 +2335,21 @@
             </div>
           </div>
 
-          <div class="muted">鎻愮ず锛氬鐣岀敱鈥滅疮璁″姛寰凤紙缁堣韩锛夆€濆喅瀹氾紝涓嶄細鍥犳秷璐硅€岄檷浣庛€?/div>
+          <div class="muted">提示：境界由“累计功德（终身）”决定，不会因消费而降低。</div>
         </div>
       `;
 
       els.tabBody.querySelectorAll("button[data-buy='woodfish']").forEach((btn) => {
         btn.addEventListener("click", () => {
           const res = buyWoodfish?.();
-          alert(res?.msg ?? "鎿嶄綔瀹屾垚");
+          alert(res?.msg ?? "操作完成");
           renderShop();
         });
       });
       els.tabBody.querySelectorAll("button[data-buy='paddle']").forEach((btn) => {
         btn.addEventListener("click", () => {
           const res = buyPaddle?.();
-          alert(res?.msg ?? "鎿嶄綔瀹屾垚");
+          alert(res?.msg ?? "操作完成");
           renderShop();
         });
       });
@@ -2364,11 +2364,11 @@
 
       els.tabBody.innerHTML = `
         <div style="display:grid; gap: 10px; margin: 0 4px;">
-          <div class="pill pill-gold">褰撳墠澧冪晫锛?span class="mono">${escapeHtml(realmInfo.name)}</span> ${realmInfo.locked ? "<span class='muted'>(寰呭渾婊?</span>" : ""}</div>
-          <div class="muted">绱鍔熷痉锛堢粓韬級锛?span class="mono">${fmtInt(earned)}</span></div>
+          <div class="pill pill-gold">当前境界：<span class="mono">${escapeHtml(realmInfo.name)}</span> ${realmInfo.locked ? "<span class='muted'>(待圆满)</span>" : ""}</div>
+          <div class="muted">累计功德（终身）：<span class="mono">${fmtInt(earned)}</span></div>
           <div class="muted">条件：${escapeHtml(gateText)}</div>
           <table class="table">
-            <thead><tr><th>澧冪晫</th><th class="mono">鎵€闇€绱鍔熷痉</th><th>鐘舵€?/th></tr></thead>
+            <thead><tr><th>境界</th><th class="mono">所需累计功德</th><th>状态</th></tr></thead>
             <tbody>
               ${TITLES.map((t) => {
                 const okNeed = earned >= t.need;
