@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="zh-Hans">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>木鱼打罪</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <div class="brand">
+          <div class="title">木鱼打罪</div>
+          <div class="subtitle">打碎罪砖，转成功德（通关才入账）</div>
+        </div>
+        <div class="top-actions">
+          <button id="btnModeCampaign" class="btn btn-primary">闯关</button>
+          <button id="btnModeEndless" class="btn">无尽</button>
+          <button id="btnRecords" class="btn">功德榜</button>
+        </div>
+      </header>
+
+      <main class="stage">
+        <canvas id="game" width="960" height="540" aria-label="木鱼打罪游戏画布"></canvas>
+        <div class="hud" aria-live="polite">
+          <div class="hud-row">
+            <div class="pill" id="hudMode">模式：—</div>
+            <div class="pill" id="hudLevel">小关：—</div>
+            <div class="pill" id="hudTitle">境界：—</div>
+            <div class="pill" id="hudLives">命：—</div>
+          </div>
+          <div class="hud-row">
+            <div class="pill pill-gold" id="hudPending">本关功德：—</div>
+            <div class="pill" id="hudBanked">已入账：—</div>
+            <div class="pill" id="hudTotal">余额功德：—</div>
+            <div class="pill" id="hudLifetime">累计功德：—</div>
+          </div>
+          <div class="hud-row small">
+            <div class="hint">拖动/移动控制挡板；点击发射；P 暂停；R 重开本关</div>
+          </div>
+        </div>
+
+        <div id="overlay" class="overlay hidden">
+          <div class="panel">
+            <div class="panel-title" id="overlayTitle">—</div>
+            <div class="panel-body" id="overlayBody"></div>
+            <div class="panel-actions">
+              <button id="btnOverlayPrimary" class="btn btn-primary">继续</button>
+              <button id="btnOverlaySecondary" class="btn">返回</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="records" class="records hidden" role="dialog" aria-modal="true" aria-label="功德榜与历史记录">
+          <div class="panel panel-wide">
+            <div class="panel-title">功德榜与历史</div>
+            <div class="tabs">
+              <button class="tab active" data-tab="leaderboard">排行榜</button>
+              <button class="tab" data-tab="history">历史记录</button>
+              <button class="tab" data-tab="profile">累计功德</button>
+              <button class="tab" data-tab="shop">商店</button>
+              <button class="tab" data-tab="titles">境界</button>
+            </div>
+            <div class="tab-body" id="tabBody"></div>
+            <div class="panel-actions">
+              <button id="btnCloseRecords" class="btn btn-primary">关闭</button>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script src="game.js"></script>
+  </body>
+</html>
